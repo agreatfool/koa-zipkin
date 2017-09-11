@@ -1,4 +1,3 @@
-import * as libCrypto from "crypto";
 import * as zipkin from "zipkin";
 import * as url from "url";
 import {Middleware as KoaMiddleware} from "koa";
@@ -23,7 +22,6 @@ export class KoaInstrumentation {
         }
 
         return async (ctx: GatewayContext, next: MiddlewareNext) => {
-            const reqId = libCrypto.randomBytes(12).toString('base64');
             const req = ctx.request;
             const res = ctx.response;
 
@@ -86,8 +84,7 @@ export class KoaInstrumentation {
                 }
             });
 
-            ctx['reqId'] = reqId;
-            ctx['traceId'] = traceId;
+            ctx[zipkin.HttpHeaders.TraceId] = traceId;
 
             await next();
 
