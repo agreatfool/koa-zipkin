@@ -1,3 +1,4 @@
+import * as libCrypto from "crypto";
 import * as zipkin from "zipkin";
 import * as url from "url";
 import {Middleware as KoaMiddleware} from "koa";
@@ -22,6 +23,7 @@ export class KoaInstrumentation {
         }
 
         return async (ctx: GatewayContext, next: MiddlewareNext) => {
+            const reqId = libCrypto.randomBytes(12).toString('base64');
             const req = ctx.request;
             const res = ctx.response;
 
@@ -33,7 +35,7 @@ export class KoaInstrumentation {
 
 
             function readHeader(headerName: string) {
-                const val = req.header[headerName];
+                const val = req.header[headerName.toLowerCase()];
                 if (val != null) {
                     return new zipkin.option.Some(val);
                 } else {
@@ -84,7 +86,8 @@ export class KoaInstrumentation {
                 }
             });
 
-            ctx[zipkin.HttpHeaders.TraceId] = traceId;
+            ctx['reqId'] = reqId;
+            ctx['traceId'] = traceId;
 
             await next();
 
@@ -97,8 +100,8 @@ export class KoaInstrumentation {
     }
 
     private static _containsRequiredHeaders(req: GatewayRequest): boolean {
-        return req.header[zipkin.HttpHeaders.TraceId] !== undefined &&
-            req.header[zipkin.HttpHeaders.SpanId] !== undefined;
+        return req.header[zipkin.HttpHeaders.TraceId.toLowerCase()] !== undefined &&
+            req.header[zipkin.HttpHeaders.SpanId.toLowerCase()] !== undefined;
     }
 
     private static _formatRequestUrl(req: GatewayRequest): string {
