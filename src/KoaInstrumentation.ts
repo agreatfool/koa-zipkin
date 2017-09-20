@@ -57,7 +57,7 @@ export class KoaInstrumentation {
                 });
             } else {
                 const rootId = tracer.createRootId();
-                if (req.header[zipkin.HttpHeaders.Flags]) {
+                if (req.header[zipkin.HttpHeaders.Flags.toLowerCase()]) {
                     const rootIdWithFlags = new zipkin.TraceId({
                         traceId: rootId.traceId,
                         parentId: rootId.parentId,
