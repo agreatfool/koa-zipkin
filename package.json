@@ -3,9 +3,9 @@
   "version": "0.0.2",
   "description": "Koa middleware for instrumentation with Zipkin.js",
   "main": "lib/index.js",
-  "author": "fengjie <https://github.com/niklaus0823>",
-  "license": "Apache-2.0",
-  "repository": "https://github.com/niklaus0823/zipkin-instrumentation-koa",
+  "author": "Jonathan Dai <https://github.com/agreatfool>",
+  "license": "MIT",
+  "repository": "https://github.com/agreatfool/koa-zipkin",
   "dependencies": {
     "koa": "^2.3.0",
     "sasdn": "0.0.14",
