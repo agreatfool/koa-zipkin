@@ -31,9 +31,8 @@ export class KoaInstrumentation {
                 'X-B3-ParentSpanId', 'X-B3-SpanId', 'X-B3-Sampled'
             ].join(', '));
 
-
             function readHeader(headerName: string) {
-                const val = req.header[headerName];
+                const val = KoaInstrumentation._getHeaderValue(req, headerName);
                 if (val != null) {
                     return new zipkin.option.Some(val);
                 } else {
@@ -55,7 +54,7 @@ export class KoaInstrumentation {
                 });
             } else {
                 const rootId = tracer.createRootId();
-                if (req.header[zipkin.HttpHeaders.Flags]) {
+                if (KoaInstrumentation._getHeaderValue(req, zipkin.HttpHeaders.Flags)) {
                     const rootIdWithFlags = new zipkin.TraceId({
                         traceId: rootId.traceId,
                         parentId: rootId.parentId,
@@ -96,9 +95,13 @@ export class KoaInstrumentation {
         };
     }
 
+    private static _getHeaderValue(req: GatewayRequest, headerName: string): string {
+        return req.header[headerName.toLowerCase()];
+    }
+
     private static _containsRequiredHeaders(req: GatewayRequest): boolean {
-        return req.header[zipkin.HttpHeaders.TraceId] !== undefined &&
-            req.header[zipkin.HttpHeaders.SpanId] !== undefined;
+        return KoaInstrumentation._getHeaderValue(req, zipkin.HttpHeaders.TraceId) !== undefined
+            && KoaInstrumentation._getHeaderValue(req, zipkin.HttpHeaders.SpanId) !== undefined;
     }
 
     private static _formatRequestUrl(req: GatewayRequest): string {
