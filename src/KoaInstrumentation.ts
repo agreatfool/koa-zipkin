@@ -1,7 +1,7 @@
-import * as zipkin from "zipkin";
-import * as url from "url";
-import {Middleware as KoaMiddleware} from "koa";
-import {MiddlewareNext, GatewayRequest, GatewayContext} from "sasdn";
+import * as zipkin from 'zipkin';
+import {Middleware as KoaMiddleware} from 'koa';
+import {MiddlewareNext, GatewayContext} from 'sasdn';
+import * as lib from './lib/lib';
 
 export interface MiddlewareOptions {
     tracer: zipkin.Tracer;
@@ -12,12 +12,12 @@ export interface MiddlewareOptions {
 export class KoaInstrumentation {
     public static middleware(options: MiddlewareOptions): KoaMiddleware {
         const tracer = options.tracer;
-        const serviceName = options.serviceName || "unknown";
+        const serviceName = options.serviceName || 'unknown';
         const port = options.port || 0;
 
         if (tracer === false) {
             return async (ctx: GatewayContext, next: MiddlewareNext) => {
-                await next()
+                await next();
             };
         }
 
@@ -31,9 +31,8 @@ export class KoaInstrumentation {
                 'X-B3-ParentSpanId', 'X-B3-SpanId', 'X-B3-Sampled'
             ].join(', '));
 
-
             function readHeader(headerName: string) {
-                const val = KoaInstrumentation._getHeaderValue(req, headerName);
+                const val = lib.getHeaderValue(req, headerName);
                 if (val != null) {
                     return new zipkin.option.Some(val);
                 } else {
@@ -41,21 +40,21 @@ export class KoaInstrumentation {
                 }
             }
 
-            if (KoaInstrumentation._containsRequiredHeaders(req)) {
+            if (lib.containsRequiredHeaders(req)) {
                 const spanId = readHeader(zipkin.HttpHeaders.SpanId);
                 spanId.ifPresent((sid: zipkin.spanId) => {
                     const childId = new zipkin.TraceId({
                         traceId: readHeader(zipkin.HttpHeaders.TraceId),
                         parentId: readHeader(zipkin.HttpHeaders.ParentSpanId),
                         spanId: sid,
-                        sampled: readHeader(zipkin.HttpHeaders.Sampled).map(KoaInstrumentation._stringToBoolean),
-                        flags: readHeader(zipkin.HttpHeaders.Flags).flatMap(KoaInstrumentation._stringToIntOption).getOrElse(0)
+                        sampled: readHeader(zipkin.HttpHeaders.Sampled).map(lib.stringToBoolean),
+                        flags: readHeader(zipkin.HttpHeaders.Flags).flatMap(lib.stringToIntOption).getOrElse(0)
                     });
                     tracer.setId(childId);
                 });
             } else {
                 const rootId = tracer.createRootId();
-                if (KoaInstrumentation._getHeaderValue(req, zipkin.HttpHeaders.Flags)) {
+                if (lib.getHeaderValue(req, zipkin.HttpHeaders.Flags)) {
                     const rootIdWithFlags = new zipkin.TraceId({
                         traceId: rootId.traceId,
                         parentId: rootId.parentId,
@@ -75,7 +74,7 @@ export class KoaInstrumentation {
                 tracer.setId(traceId);
                 tracer.recordServiceName(serviceName);
                 tracer.recordRpc(req.method.toUpperCase());
-                tracer.recordBinary('http.url', KoaInstrumentation._formatRequestUrl(req));
+                tracer.recordBinary('http.url', lib.formatRequestUrl(req));
                 tracer.recordAnnotation(new zipkin.Annotation.ServerRecv());
                 tracer.recordAnnotation(new zipkin.Annotation.LocalAddr({port}));
 
@@ -94,36 +93,5 @@ export class KoaInstrumentation {
                 tracer.recordAnnotation(new zipkin.Annotation.ServerSend());
             });
         };
-    }
-
-    private static _getHeaderValue(req: GatewayRequest, headerName: string): string {
-        return req.header[headerName.toLowerCase()];
-    }
-
-    private static _containsRequiredHeaders(req: GatewayRequest): boolean {
-        return KoaInstrumentation._getHeaderValue(req, zipkin.HttpHeaders.TraceId) !== undefined
-            && KoaInstrumentation._getHeaderValue(req, zipkin.HttpHeaders.SpanId) !== undefined;
-    }
-
-    private static _formatRequestUrl(req: GatewayRequest): string {
-        const parsed = url.parse(req.originalUrl);
-        return url.format({
-            protocol: req.protocol,
-            host: req.header['host'],
-            pathname: parsed.pathname,
-            search: parsed.search
-        });
-    }
-
-    private static _stringToBoolean(str: string): boolean {
-        return str === '1';
-    }
-
-    private static _stringToIntOption(str: string): any {
-        try {
-            return new zipkin.option.Some(parseInt(str));
-        } catch (err) {
-            return zipkin.option.None;
-        }
     }
 }
