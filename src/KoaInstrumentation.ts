@@ -35,7 +35,7 @@ export class KoaInstrumentation {
 
 
             function readHeader(headerName: string) {
-                const val = req.header[headerName.toLowerCase()];
+                const val = KoaInstrumentation._getHeaderValue(req, headerName);
                 if (val != null) {
                     return new zipkin.option.Some(val);
                 } else {
@@ -57,7 +57,7 @@ export class KoaInstrumentation {
                 });
             } else {
                 const rootId = tracer.createRootId();
-                if (req.header[zipkin.HttpHeaders.Flags.toLowerCase()]) {
+                if (KoaInstrumentation._getHeaderValue(req, zipkin.HttpHeaders.Flags)) {
                     const rootIdWithFlags = new zipkin.TraceId({
                         traceId: rootId.traceId,
                         parentId: rootId.parentId,
@@ -99,9 +99,13 @@ export class KoaInstrumentation {
         };
     }
 
+    private static _getHeaderValue(req: GatewayRequest, headerName: string): string {
+        return req.header[headerName.toLowerCase()];
+    }
+
     private static _containsRequiredHeaders(req: GatewayRequest): boolean {
-        return req.header[zipkin.HttpHeaders.TraceId.toLowerCase()] !== undefined &&
-            req.header[zipkin.HttpHeaders.SpanId.toLowerCase()] !== undefined;
+        return KoaInstrumentation._getHeaderValue(req, zipkin.HttpHeaders.TraceId) !== undefined
+            && KoaInstrumentation._getHeaderValue(req, zipkin.HttpHeaders.SpanId) !== undefined;
     }
 
     private static _formatRequestUrl(req: GatewayRequest): string {
