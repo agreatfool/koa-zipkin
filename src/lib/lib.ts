@@ -1,6 +1,6 @@
-import * as zipkin from "zipkin";
-import * as url from "url";
-import {MiddlewareNext, GatewayRequest, GatewayContext} from "sasdn";
+import * as zipkin from 'zipkin';
+import * as url from 'url';
+import {GatewayRequest} from 'sasdn';
 
 export function getHeaderValue(req: GatewayRequest, headerName: string): string {
     return req.header[headerName.toLowerCase()];
