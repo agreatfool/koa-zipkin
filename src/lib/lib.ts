@@ -8,8 +8,8 @@ export function getHeaderValue(req: GatewayRequest, headerName: string): string 
 }
 
 export function containsRequiredHeaders(req: GatewayRequest): boolean {
-    return getHeaderValue(req, zipkin.HttpHeaders.TraceId) !== undefined
-        && getHeaderValue(req, zipkin.HttpHeaders.SpanId) !== undefined;
+    return getHeaderValue(req, zipkin.HttpHeaders.TraceId) !== ''
+        && getHeaderValue(req, zipkin.HttpHeaders.SpanId) !== '';
 }
 
 export function formatRequestUrl(req: GatewayRequest): string {
