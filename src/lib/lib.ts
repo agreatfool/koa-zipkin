@@ -3,7 +3,17 @@ import * as url from 'url';
 import {GatewayRequest} from 'sasdn';
 
 export function getHeaderValue(req: GatewayRequest, headerName: string): string {
-    return req.header[headerName.toLowerCase()];
+    const header = req.header;
+    if (header[headerName] !== undefined) {
+        return header[headerName];
+    }
+    if (header[headerName.toLowerCase()] !== undefined) {
+        return header[headerName.toLowerCase()];
+    }
+    if (header[headerName.toUpperCase()] !== undefined) {
+        return header[headerName.toUpperCase()];
+    }
+    return null;
 }
 
 export function containsRequiredHeaders(req: GatewayRequest): boolean {
