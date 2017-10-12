@@ -3,7 +3,8 @@ import * as url from 'url';
 import {GatewayRequest} from 'sasdn';
 
 export function getHeaderValue(req: GatewayRequest, headerName: string): string {
-    return req.header[headerName.toLowerCase()];
+    // req.get() 方法本身就是不区分大小写的，eg：X-B3-TraceId 和 x-b3-traceid 可以获取相同的数据
+    return req.get(headerName);
 }
 
 export function containsRequiredHeaders(req: GatewayRequest): boolean {
