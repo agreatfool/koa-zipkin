@@ -74,7 +74,7 @@ export class KoaInstrumentation {
                 tracer.setId(traceId);
                 tracer.recordServiceName(serviceName);
                 tracer.recordRpc(req.method.toUpperCase());
-                tracer.recordBinary('http.url', lib.formatRequestUrl(req));
+                tracer.recordBinary('http_url', lib.formatRequestUrl(req));
                 tracer.recordAnnotation(new zipkin.Annotation.ServerRecv());
                 tracer.recordAnnotation(new zipkin.Annotation.LocalAddr({port}));
 
@@ -89,7 +89,7 @@ export class KoaInstrumentation {
 
             tracer.scoped(() => {
                 tracer.setId(traceId);
-                tracer.recordBinary('http.status_code', res.status.toString());
+                tracer.recordBinary('http_status_code', res.status.toString());
                 tracer.recordAnnotation(new zipkin.Annotation.ServerSend());
             });
         };
