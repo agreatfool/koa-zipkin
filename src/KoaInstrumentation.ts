@@ -1,27 +1,36 @@
 import * as zipkin from 'zipkin';
-import {Middleware as KoaMiddleware} from 'koa';
-import {MiddlewareNext, GatewayContext} from 'sasdn';
+import {Middleware as KoaMiddleware, Context as KoaContext} from 'koa';
 import * as lib from './lib/lib';
 
-export interface MiddlewareOptions {
+type MiddlewareNext = () => Promise<any>;
+
+export interface TraceInfo {
     tracer: zipkin.Tracer;
     serviceName?: string;
     port?: number;
 }
 
-export class KoaInstrumentation {
-    public static middleware(options: MiddlewareOptions): KoaMiddleware {
-        const tracer = options.tracer;
-        const serviceName = options.serviceName || 'unknown';
-        const port = options.port || 0;
+const defaultTraceInfo: TraceInfo = {
+    tracer: false,
+    serviceName: 'unknown',
+    port: 0,
+};
 
-        if (tracer === false) {
-            return async (ctx: GatewayContext, next: MiddlewareNext) => {
+export class KoaInstrumentation {
+    public static middleware(info: TraceInfo = defaultTraceInfo): KoaMiddleware {
+
+        if (info.tracer === false) {
+            return async (ctx: KoaContext, next: MiddlewareNext) => {
                 await next();
             };
         }
 
-        return async (ctx: GatewayContext, next: MiddlewareNext) => {
+        // Set value
+        const tracer = info.tracer as zipkin.Tracer;
+        const serviceName = info.serviceName || 'unknown';
+        const port = info.port || 0;
+
+        return async (ctx: KoaContext, next: MiddlewareNext) => {
             const req = ctx.request;
             const res = ctx.response;
 
@@ -74,7 +83,7 @@ export class KoaInstrumentation {
                 tracer.setId(traceId);
                 tracer.recordServiceName(serviceName);
                 tracer.recordRpc(req.method.toUpperCase());
-                tracer.recordBinary('http.url', lib.formatRequestUrl(req));
+                tracer.recordBinary('http_url', lib.formatRequestUrl(req));
                 tracer.recordAnnotation(new zipkin.Annotation.ServerRecv());
                 tracer.recordAnnotation(new zipkin.Annotation.LocalAddr({port}));
 
@@ -89,7 +98,7 @@ export class KoaInstrumentation {
 
             tracer.scoped(() => {
                 tracer.setId(traceId);
-                tracer.recordBinary('http.status_code', res.status.toString());
+                tracer.recordBinary('http_status_code', res.status.toString());
                 tracer.recordAnnotation(new zipkin.Annotation.ServerSend());
             });
         };
