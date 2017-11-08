@@ -1,12 +1,9 @@
 // Type definitions for zipkin-transport-http 0.7.3
-// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
 /// <reference types="node" />
 
-import * as CLSContext from 'zipkin-context-cls';
-
 export interface TracerOption {
-    ctxImpl?: CLSContext;
+    ctxImpl?: any;
     recorder?: zipkin.BatchRecorder;
     sampler?: any;
     traceId128Bit?: boolean;
