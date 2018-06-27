@@ -76,7 +76,8 @@ export class KoaInstrumentation {
                 tracer.recordRpc(req.method.toUpperCase());
                 tracer.recordBinary('http.url', lib.formatRequestUrl(req));
                 tracer.recordAnnotation(new zipkin.Annotation.ServerRecv());
-                tracer.recordAnnotation(new zipkin.Annotation.LocalAddr({port}));
+                tracer.recordLocalAddr({ port });
+                // tracer.recordAnnotation(new zipkin.Annotation.LocalAddr({port}));
 
                 if (traceId.flags !== 0 && traceId.flags != null) {
                     tracer.recordBinary(zipkin.HttpHeaders.Flags, traceId.flags.toString());
